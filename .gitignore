@@ -1,0 +1,13 @@
+cmake-build-*/
+build/
+.cmake/
+
+.idea/
+
+database
+
+WebPanelVPNs
+
+/tmp/qr.png
+
+.DS_Store

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VPN Panel</title>
+</head>
+<body>
+<div style="text-align: center;">
+    <h1>Welcome to Your personal VPN panel!</h1>
+    <p id="error" style="display:none; color:red">Invalid login details</p>
+    <form action="/login" method="POST">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" placeholder="Type login" required>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" placeholder="Type password" required>
+        <button type="submit">Log in</button>
+    </form>
+</div>
+<script>
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "1") {
+        document.getElementById("error").style.display = "block";
+    }
+</script>
+</body>
+</html>

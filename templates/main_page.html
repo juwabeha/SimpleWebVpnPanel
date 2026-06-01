@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VPN Panel</title>
+</head>
+<body>
+<h1>WireGuard VPN Panel</h1>
+
+<h2>Status: <span id="status">⏳</span></h2>
+<p>Clients: <span id="clients">...</span></p>
+<p>Traffic: <span id="bandwidth">...</span></p>
+
+<button onclick="startVPN()">Start</button>
+<button onclick="stopVPN()">Stop</button>
+
+<h2>Clients</h2>
+<div id="clients-list"></div>
+
+<h2>Add client</h2>
+<label for="new-name"></label><input type="text" id="new-name" placeholder="Name">
+<label for="new-ip"></label><input type="text" id="new-ip" placeholder="IP (e.g. 10.0.0.2)">
+<button onclick="createClient()">Create</button>
+
+<script>
+    function loadStatus() {
+        fetch("/api/wireguard_status")
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById("status").innerText = data.wireguard === "true" ? "🟢" : "🔴";
+                document.getElementById("clients").innerText = data.wireguard_clients;
+                document.getElementById("bandwidth").innerText = data.wireguard_bandwidth;
+
+                // вывести список клиентов
+                let html = "";
+                for (let client of data.clients) {
+                    html += `<p>${client.status === "on" ? "🟢" : "🔴"} ${client.user} — ${client.ip}
+                            <button onclick="deleteClient('${client.user}')">Delete</button>
+                            <button onclick="getInfo('${client.user}')">Config</button>
+                        </p>`;
+                }
+                document.getElementById("clients-list").innerHTML = html;
+            });
+    }
+
+    function startVPN() {
+        fetch("/api/wireguard/start", {method: "POST"})
+            .then(() => loadStatus());
+    }
+
+    function stopVPN() {
+        fetch("/api/wireguard/stop", {method: "POST"})
+            .then(() => loadStatus());
+    }
+
+    function createClient() {
+        const name = document.getElementById("new-name").value;
+        const ip = document.getElementById("new-ip").value;
+        const body = new URLSearchParams({name, ip});
+        fetch("/api/wireguard/create", {method: "POST", body})
+            .then(() => loadStatus());
+    }
+
+    function deleteClient(key) {
+        const body = new URLSearchParams({key});
+        fetch("/api/wireguard/delete", {method: "POST", body})
+            .then(() => loadStatus());
+    }
+
+    function getInfo(name) {
+        const body = new URLSearchParams({name});
+        fetch("/api/wireguard/info", {method: "POST", body})
+            .then(r => r.json())
+            .then(data => {
+                alert(data.config);
+                // QR код
+                document.getElementById("qr").src = "data:image/png;base64," + data.qrcode;
+            });
+    }
+
+    loadStatus();
+    setInterval(loadStatus, 5000);
+</script>
+
+<img id="qr" src="" style="display:block; margin-top:20px;" alt="">
+
+<h2>Change credentials</h2>
+<input type="text" id="new-username" placeholder="New username">
+<input type="password" id="new-password" placeholder="New password">
+<button onclick="changeCredentials()">Save</button>
+
+<script>
+    function changeCredentials() {
+        const username = document.getElementById("new-username").value;
+        const password = document.getElementById("new-password").value;
+        const body = new URLSearchParams({username, password});
+        fetch("/api/change_credentials", {method: "POST", body})
+            .then(() => alert("Saved!"));
+    }
+</script>
+</body>
+</html>
